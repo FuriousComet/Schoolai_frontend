@@ -6,9 +6,8 @@ import { useNavigate } from 'react-router-dom';
 
 const FinalViewPage = ({ prompt, chapters, setContent, content }) => {
   const [userId, setUserId] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadingMessage, setLoadingMessage] = useState("Generating your course...");
-  const [completedChapters, setCompletedChapters] = useState(0);
+  const [subchapterCompletion, setSubchapterCompletion] = useState({}); // Track subchapter completion per chapter
+  const [showSubchapters, setShowSubchapters] = useState({}); // Manage visibility of subchapters
   const navigate = useNavigate();
 
   const auth = getAuth();
@@ -28,7 +27,7 @@ const FinalViewPage = ({ prompt, chapters, setContent, content }) => {
 
   const fetchContent = async (chapterName, subchapterName) => {
     try {
-      const response = await fetch('http://137.184.193.15:5000/generate-content', {
+      const response = await fetch('http://localhost:5000/generate-content', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -48,7 +47,18 @@ const FinalViewPage = ({ prompt, chapters, setContent, content }) => {
         ...prev,
         [`${chapterName}-${subchapterName}`]: data
       }));
-      setCompletedChapters(prev => prev + 1);
+
+      // Update subchapter completion
+      setSubchapterCompletion(prev => {
+        const updatedSubchapters = {
+          ...prev[chapterName],
+          [subchapterName]: true
+        };
+        return {
+          ...prev,
+          [chapterName]: updatedSubchapters
+        };
+      });
     } catch (error) {
       console.error('There was an error fetching the content:', error);
     }
@@ -57,45 +67,32 @@ const FinalViewPage = ({ prompt, chapters, setContent, content }) => {
   useEffect(() => {
     if (chapters && userId) {
       const fetchAllContent = async () => {
-        const contentPromises = [];
         for (const [chapterName, subchapters] of Object.entries(chapters)) {
-          for (const subchapter of subchapters) {
-            contentPromises.push(fetchContent(chapterName, subchapter));
-          }
+          subchapters.forEach(subchapter => {
+            fetchContent(chapterName, subchapter);
+          });
         }
-        await Promise.all(contentPromises);
-        setIsLoading(false);
       };
 
       fetchAllContent();
     }
   }, [prompt, chapters, setContent, userId]);
 
-  useEffect(() => {
-    if (isLoading) {
-      const messages = [
-        "AI is crafting your unique course...",
-        "Analyzing and organizing educational content...",
-        "Your course is almost ready...",
-        "Generating in-depth subject matter..."
-      ];
-      let index = 0;
-      const interval = setInterval(() => {
-        if (completedChapters < Object.keys(chapters).length) {
-          setLoadingMessage(`${messages[index]} (${completedChapters}/${Object.keys(chapters).length} chapters completed)`);
-        } else {
-          setLoadingMessage("All chapters generated. Finalizing your course...");
-        }
-        index = (index + 1) % messages.length;
-      }, 3000);
+  const toggleSubchaptersVisibility = (chapterName) => {
+    setShowSubchapters(prev => ({
+      ...prev,
+      [chapterName]: !prev[chapterName]
+    }));
+  };
 
-      return () => clearInterval(interval);
-    }
-  }, [isLoading, completedChapters, chapters]);
+  const areAllSubchaptersComplete = (chapterName) => {
+    const subchapters = subchapterCompletion[chapterName];
+    return subchapters && Object.keys(subchapters).length === chapters[chapterName].length && Object.values(subchapters).every(isComplete => isComplete);
+  };
 
   const handleStartCourse = async () => {
     try {
-      const response = await fetch('http://137.184.193.15:5000/save-course-data', {
+      const response = await fetch('http://localhost:5000/save-course-data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -140,67 +137,48 @@ const FinalViewPage = ({ prompt, chapters, setContent, content }) => {
         <div className={`${styles.container} ${styles.bgWhite} ${styles.shadowBox5} ${styles.rounded} ${styles.p8}`}>
           <div className={styles.finalViewHeader}>
             <h1 className={`${styles.text4xl} ${styles.fontExtraBold} ${styles.textCenter} ${styles.primaryColor}`}>
-              Final View for "{prompt}"
+              {prompt}
             </h1>
+          </div>
+          <div className={styles.chaptersContainer}>
+            {Object.entries(chapters)
+              .sort(([a], [b]) => sortChaptersNumerically(a, b))
+              .map(([chapterName, subchapters], chapterIndex) => (
+                <div key={chapterIndex} className={styles.chapterSection}>
+                  <div className={styles.chapterHeader}>
+                    <h2 className={styles.chapterTitle}>
+                      {chapterName}
+                      <span className={areAllSubchaptersComplete(chapterName) ? styles.checkmark : styles.loadingSpinner}></span>
+                    </h2>
+                    <button
+                      className={styles.toggleButton}
+                      onClick={() => toggleSubchaptersVisibility(chapterName)}
+                    >
+                      {showSubchapters[chapterName] ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
+                  {showSubchapters[chapterName] && (
+                    <div className={styles.subchaptersContainer}>
+                      {subchapters
+                        .sort((a, b) => sortChaptersNumerically(a, b))
+                        .map((subchapter, subchapterIndex) => (
+                          <div key={subchapterIndex} className={styles.subchapter}>
+                            <span>{subchapter}</span>
+                            <span className={content[`${chapterName}-${subchapter}`] ? styles.checkmark : styles.loadingSpinner}></span>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              ))}
           </div>
           <button
             onClick={handleStartCourse}
             className={`${styles.btn} ${styles.btnPrimary} ${styles.mt4} ${styles.wFull}`}
-            disabled={isLoading}
+            disabled={!Object.keys(chapters).every(areAllSubchaptersComplete)}
           >
-            {isLoading ? 'Loading...' : 'Start Course'}
+            Start Course
           </button>
-          {isLoading ? (
-            <div className={styles.loadingContainer}>
-              <div className={styles.loadingBaton}></div>
-              <p className={styles.loadingText}>{loadingMessage}</p>
-            </div>
-          ) : (
-            <div className={styles.chaptersContainer}>
-              {Object.entries(chapters)
-                .sort(([a], [b]) => sortChaptersNumerically(a, b))
-                .map(([chapterName, subchapters], chapterIndex) => (
-                  <div
-                    key={chapterIndex}
-                    className={`${styles.chapterCard} ${styles.scrollableBox}`}
-                  >
-                    <img
-                      src="../assets/images/all-img/chapter-bg.png"
-                      alt="Background"
-                      className={styles.backgroundImage}
-                    />
-                    <div className={styles.overlay}></div>
-                    <div className="p-6 relative">
-                      <h2 className={`${styles.chapterTitle} ${styles.accentColor}`}>
-                        {chapterName}
-                      </h2>
-                      <div className={styles.subchaptersContainer}>
-                        {subchapters
-                          .sort((a, b) => sortChaptersNumerically(a, b))
-                          .map((subchapter, subchapterIndex) => (
-                            <div
-                              key={subchapterIndex}
-                              className={styles.subchapterCard}
-                            >
-                              <h3 className={`${styles.subchapterTitle} ${styles.subchapterAccentColor}`}>
-                                {`Course ${subchapterIndex + 1}: ${subchapter}`}
-                              </h3>
-                              <div
-                                className={`${styles.subchapterContent} ${styles.courseContent}`}
-                                dangerouslySetInnerHTML={{
-                                  __html:
-                                    content[`${chapterName}-${subchapter}`] ||
-                                    '<p>Loading...</p>',
-                                }}
-                              />
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          )}
         </div>
       </div>
     </>

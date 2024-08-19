@@ -1,22 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import styles from '../../style/CourseOutlinePage.module.css';
 import Header from '../Header';
 
-const CourseOutlinePage = ({ prompt, setChapters }) => {
+const CourseOutlinePage = ({ setChapters }) => {
   const [outline, setOutline] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const { prompt, chapters, chapterDepth } = location.state;
 
   const fetchOutline = async (retryCount = 3) => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://137.184.193.15:5000/generate-chapters', {
+      const response = await fetch('http://localhost:5000/generate-chapters', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ prompt })
+        body: JSON.stringify({
+          prompt,
+          chapters,         // Number of chapters
+          chapterDepth      // Number of subchapters per chapter
+        })
       });
       if (!response.ok) {
         throw new Error('Network response was not ok');
@@ -48,7 +55,7 @@ const CourseOutlinePage = ({ prompt, setChapters }) => {
 
   useEffect(() => {
     fetchOutline();
-  }, [prompt, setChapters]);
+  }, [prompt, chapters, chapterDepth, setChapters]);
 
   const handleNext = () => {
     navigate("/schoolai/finalview"); // Use navigate instead of window.location.href
