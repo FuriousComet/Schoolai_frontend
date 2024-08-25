@@ -63,6 +63,57 @@ const ViewHistoryCoursePage = () => {
 
   if (isLoading) return <div className={styles.loading}><div className={styles.loader}></div></div>;
 
+  const parseContent = (content) => {
+    const contentElements = content.split('\n').filter(Boolean).map(line => {
+      if (line.startsWith('<<Concept>>')) {
+        return { type: 'concept', text: line.replace('<<Concept>>', '').trim() };
+      }
+      if (line.startsWith('<<Title>>')) {
+        return { type: 'title', text: line.replace('<<Title>>', '').trim() };
+      }
+      if (line.startsWith('<<Subheading>>')) {
+        return { type: 'subheading', text: line.replace('<<Subheading>>', '').trim() };
+      }
+      if (line.startsWith('<<Emphasis>>')) {
+        return { type: 'emphasis', text: line.replace(/<<Emphasis>>/g, '').trim() };
+      }
+      if (line.startsWith('<<Code>>')) {
+        return { type: 'code', text: line.replace('<<Code>>', '').trim() };
+      }
+      if (line.startsWith('<<Image:URL>>')) {
+        return { type: 'image', url: line.replace('<<Image:URL>>', '').trim() };
+      }
+      return { type: 'paragraph', text: line };
+    });
+    return contentElements;
+  };
+
+  const renderContent = (parsedContent) => {
+    return parsedContent.map((element, index) => {
+      switch (element.type) {
+        case 'title':
+          return <h3 key={index} className={styles.title}>{element.text}</h3>;
+        case 'subheading':
+          return <h4 key={index} className={styles.subheading}>{element.text}</h4>;
+        case 'concept':
+          return <blockquote key={index} className={styles.concept}><em>{element.text}</em></blockquote>;
+        case 'emphasis':
+          return <p key={index} className={styles.emphasis}><em>{element.text}</em></p>;
+        case 'code':
+          return (
+            <pre key={index} className={styles.code}>
+              <code>{element.text}</code>
+            </pre>
+          );
+        case 'image':
+          return <img key={index} src={element.url} alt="Related visual content" className={styles.image} />;
+        case 'paragraph':
+        default:
+          return <p key={index} className={styles.paragraph}>{element.text}</p>;
+      }
+    });
+  };
+
   const chapterNames = Object.keys(chapters).sort((a, b) => {
     const numA = parseInt(a.match(/\d+/)[0]);
     const numB = parseInt(b.match(/\d+/)[0]);
@@ -71,6 +122,7 @@ const ViewHistoryCoursePage = () => {
   const currentChapterName = chapterNames[currentChapterIndex];
   const subchapters = chapters[currentChapterName].map(subchapter => subchapter.replace(/^Subchapter \d+: /, ''));
   const currentSubchapter = subchapters[currentSubchapterIndex];
+  const parsedContent = parseContent(content[`${currentChapterName}-${currentSubchapter}`] || '');
 
   const handleNext = () => {
     if (currentSubchapterIndex < subchapters.length - 1) {
@@ -102,7 +154,7 @@ const ViewHistoryCoursePage = () => {
   const handleDigDeeper = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://137.184.193.15:5000/dig-deeper', {
+      const response = await fetch('http://localhost:5000/dig-deeper', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -159,12 +211,9 @@ const ViewHistoryCoursePage = () => {
                 <div className={styles.loader}></div>
               </div>
             ) : (
-              <div
-                className={styles.detailedContent}
-                dangerouslySetInnerHTML={{
-                  __html: detailedContent || content[`${currentChapterName}-${currentSubchapter}`] || '<p>Loading...</p>'
-                }}
-              />
+              <div className={styles.detailedContent}>
+                {renderContent(parsedContent)}
+              </div>
             )}
             <button onClick={handleTakeExam} className={`${styles.btn} ${styles.btnPrimary} ${styles.mt4}`} style={{marginRight:"30px"}}>Take Exam</button>
             <button onClick={handleDigDeeper} className={`${styles.btn} ${styles.btnSecondary} ${styles.mt4}`} disabled={isLoading}>

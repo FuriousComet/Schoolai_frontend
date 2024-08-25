@@ -6,8 +6,8 @@ import { useNavigate } from 'react-router-dom';
 
 const FinalViewPage = ({ prompt, chapters, setContent, content }) => {
   const [userId, setUserId] = useState(null);
-  const [subchapterCompletion, setSubchapterCompletion] = useState({}); // Track subchapter completion per chapter
-  const [showSubchapters, setShowSubchapters] = useState({}); // Manage visibility of subchapters
+  const [subchapterCompletion, setSubchapterCompletion] = useState({});
+  const [showSubchapters, setShowSubchapters] = useState({});
   const navigate = useNavigate();
 
   const auth = getAuth();
@@ -18,7 +18,7 @@ const FinalViewPage = ({ prompt, chapters, setContent, content }) => {
         setUserId(user.uid);
       } else {
         console.log("User not signed in");
-        window.location.href = "/schoolai/login"; // Redirect to login if user is not authenticated
+        window.location.href = "/schoolai/login"; 
       }
     });
 
@@ -27,7 +27,7 @@ const FinalViewPage = ({ prompt, chapters, setContent, content }) => {
 
   const fetchContent = async (chapterName, subchapterName) => {
     try {
-      const response = await fetch('http://137.184.193.15:5000/generate-content', {
+      const response = await fetch('http://localhost:5000/generate-content', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -48,7 +48,6 @@ const FinalViewPage = ({ prompt, chapters, setContent, content }) => {
         [`${chapterName}-${subchapterName}`]: data
       }));
 
-      // Update subchapter completion
       setSubchapterCompletion(prev => {
         const updatedSubchapters = {
           ...prev[chapterName],
@@ -92,7 +91,7 @@ const FinalViewPage = ({ prompt, chapters, setContent, content }) => {
 
   const handleStartCourse = async () => {
     try {
-      const response = await fetch('http://137.184.193.15:5000/save-course-data', {
+      const response = await fetch('http://localhost:5000/save-course-data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -110,8 +109,7 @@ const FinalViewPage = ({ prompt, chapters, setContent, content }) => {
       const courseData = await response.json();
       console.log("Course data saved successfully");
 
-      // Navigate to CourseContentPage with the saved course ID
-      const courseId = courseData.id; // Assuming the server returns the course ID
+      const courseId = courseData.id;
       navigate(`/schoolai/coursecontent?courseId=${courseId}`);
     } catch (error) {
       console.error('Error saving course data:', error);
