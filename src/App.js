@@ -15,6 +15,7 @@ import CourseOutlinePage from "./Components/Courses/CourseOutlinePage";
 import FinalViewPage from "./Components/Courses/FinalViewPage";
 import CourseContentPage from "./Components/Courses/CourseContentPage";
 import ExamPage from "./Components/Courses/ExamPage";
+import FinalExamPage from "./Components/Courses/FinalExamPage"
 import GenerateVideoCourse from "./Components/Courses/GenerateVideoCourse";
 import ViewHistoryCoursePage from './Components/Courses/ViewHistoryCoursePage';
 import Pricing from './Components/Pages/Pricing';
@@ -53,6 +54,7 @@ function App() {
             <Route path="/schoolai/coursecontent" element={<PrivateRoute element={<CourseContentPage prompt={prompt} chapters={chapters} content={content} />} />} />
             <Route path="/schoolai/viewhistorycourse/:courseTitle" element={<PrivateRoute element={<ViewHistoryCoursePage />} />} />
             <Route path="/schoolai/exam" element={<PrivateRoute element={<ExamPage {...examDetails} prompt={prompt} />} />} />
+            <Route path="/schoolai/final-exam" element={<PrivateRoute element={<FinalExamPage />} />} />
             <Route path="/schoolai/generatevideo" element={<PrivateRoute element={<GenerateVideoCourse />} />} />
             <Route path="/schoolai/blog-standard" element={<BLogStandard />} />
             <Route path="/schoolai/contacts" element={<ContactUs />} />

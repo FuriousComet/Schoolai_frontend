@@ -191,11 +191,13 @@ code {
 
 .image {
   width: 100%;
-  max-width: 100%;
-  height: auto;
+  max-width: 600px; /* Sets the maximum width to 400px */
+  max-height: 500px; /* Sets the maximum height to 300px */
+  height: auto; /* Maintains the aspect ratio */
   border-radius: 8px;
   margin-bottom: 20px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  object-fit: contain; /* Ensures the image fits within the set dimensions without cropping */
 }
 
 .paragraph {
@@ -256,6 +258,22 @@ code {
   background-color: #e0a800;
 }
 
+.btnVoiceMode {
+  background-color: #17a2b8; /* Blueish color for voice mode */
+}
+
+.btnVoiceMode:hover {
+  background-color: #138496;
+}
+
+.btnVoice {
+  background-color: #17a2b8; /* Same blueish color for consistency */
+}
+
+.btnVoice:hover {
+  background-color: #138496;
+}
+
 .mt4 {
   margin-top: 2rem;
 }
@@ -271,12 +289,23 @@ code {
 /* New Styling for Voice Options Section */
 .voiceOptionsContainer {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
   margin-top: 2rem;
+  border-top: 1px solid #17a2b8;
+  padding-top: 20px;
+  width: 100%;
+}
+
+.voiceContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
 .teacherImage {
-  width: 300px; /* Increased the size of the teacher image */
+  width: 60%; /* Increased the size of the teacher image */
   height: auto;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -286,10 +315,12 @@ code {
   display: flex;
   flex-direction: column;
   margin-left: 20px;
+  width: 100%;
 }
 
 .voiceButtons button {
   margin-bottom: 10px;
+  width: 100%;
 }
 
 /* Question Input Styling */
@@ -365,4 +396,67 @@ code {
   font-size: 1.25rem;
   font-weight: 500;
   color: #444;
+}
+
+.teacherImage, .teacherVideo {
+  width: 100%;
+  max-width: 800px; /* Adjust the width as needed */
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+/* Ensuring video has the same styling as the image */
+.teacherVideo {
+  display: block;
+}
+
+.teacherImage {
+  width: 60%;
+  max-width: 400px;
+  margin: auto;
+  display: block;
+}
+
+.imageAnimation {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Progress Bar */
+.progressBarContainer {
+  width: 100%;
+  background-color: #f3f3f3;
+  border-radius: 8px;
+  margin-top: 20px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progressBar {
+  width: 0;
+  height: 8px;
+  background-color: #007BFF;
+  animation: progressBar 5s linear forwards;
+}
+
+@keyframes progressBar {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 100%;
+  }
 }
